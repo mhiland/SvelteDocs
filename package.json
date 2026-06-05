@@ -1,0 +1,53 @@
+{
+  "name": "@dependably/svelte-docs",
+  "version": "0.1.0",
+  "description": "A small, reusable Svelte 5 documentation engine: client-rendered sidebar/search/version/i18n docs from a markdown git repo, plus a build toolkit that turns markdown into a static content bundle.",
+  "type": "module",
+  "license": "UNLICENSED",
+  "private": true,
+  "files": [
+    "src",
+    "build"
+  ],
+  "svelte": "./src/index.js",
+  "exports": {
+    ".": {
+      "svelte": "./src/index.js",
+      "default": "./src/index.js"
+    },
+    "./build": "./build/index.js",
+    "./styles.css": "./src/styles/docs.css"
+  },
+  "bin": {
+    "svelte-docs-build": "./build/cli.js"
+  },
+  "scripts": {
+    "build:lib": "vite build",
+    "demo": "vite",
+    "check": "node --check build/cli.js && node --check build/index.js"
+  },
+  "peerDependencies": {
+    "svelte": "^5"
+  },
+  "dependencies": {
+    "@shikijs/rehype": "^3",
+    "flexsearch": "^0.7",
+    "gray-matter": "^4",
+    "hast-util-to-string": "^3",
+    "rehype-autolink-headings": "^7",
+    "rehype-sanitize": "^6",
+    "rehype-slug": "^6",
+    "rehype-stringify": "^10",
+    "remark-gfm": "^4",
+    "remark-parse": "^11",
+    "remark-rehype": "^11",
+    "shiki": "^3",
+    "unified": "^11",
+    "unist-util-visit": "^5"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^7.0.0",
+    "svelte": "^5.53.12",
+    "vite": "^8.0.1"
+  }
+}

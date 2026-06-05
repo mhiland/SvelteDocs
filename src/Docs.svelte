@@ -18,6 +18,11 @@
     locales = [],
     fallbackLocale = 'en',
     onNavigate = () => {},
+    // Top-left brand: the label, and where clicking it goes. `homeUrl` defaults
+    // to the site root so embedded docs link back to the host's home page; set
+    // it to `basePath` for a standalone docs site.
+    siteName = 'Docs',
+    homeUrl = '/',
   } = $props()
 
   let manifest = $state(null)
@@ -116,7 +121,7 @@
       aria-label={t('menu')}
       onclick={() => (sidebarOpen = !sidebarOpen)}>☰</button
     >
-    <a class="docs-home-link" href={basePath}>Docs</a>
+    <a class="docs-home-link" href={homeUrl}>{siteName}</a>
     <div class="docs-header-spacer"></div>
     <button type="button" class="docs-search-button" onclick={() => (searchOpen = true)}>
       <span>{t('searchPlaceholder')}</span>

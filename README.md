@@ -45,6 +45,8 @@ engine at runtime. (`<git-url>` may be a tokenized HTTPS URL in CI.)
 
 <Docs
   basePath="/docs"
+  siteName="Dependably"
+  homeUrl="/"
   manifestUrl="/docs-content/manifest.json"
   contentBaseUrl="/docs-content"
   locale={$locale}
@@ -64,6 +66,8 @@ paths (SPA fallback) so deep links resolve.
 | prop | default | purpose |
 |---|---|---|
 | `basePath` | `/docs` | URL prefix the engine owns |
+| `siteName` | `Docs` | top-left brand label |
+| `homeUrl` | `/` | where the brand link goes (site root for embedded docs; set to `basePath` for a standalone docs site) |
 | `manifestUrl` | `/docs-content/manifest.json` | first fetch |
 | `contentBaseUrl` | `/docs-content` | root for page JSON + search indexes |
 | `locale` | `en` | host's current locale (reactive) |

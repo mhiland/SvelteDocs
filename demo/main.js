@@ -15,6 +15,8 @@ mount(Docs, {
   target: document.getElementById('app'),
   props: {
     basePath: '/docs',
+    siteName: 'Dependably',
+    homeUrl: '/docs',
     manifestUrl: '/docs-content/manifest.json',
     contentBaseUrl: '/docs-content',
     locale: 'en',

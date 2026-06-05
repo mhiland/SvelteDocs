@@ -6,11 +6,19 @@
     $props()
 
   const cache = new Map() // `${version}:${locale}` -> { index, docsById }
+
+  const humanize = (s) => s.replace(/[-_]/g, ' ').replace(/^\w/, (c) => c.toUpperCase())
+  function breadcrumbOf(slug) {
+    const i = slug.lastIndexOf('/')
+    return i < 0 ? '' : slug.slice(0, i).split('/').map(humanize).join(' › ')
+  }
   let query = $state('')
   let results = $state([])
   let active = $state(0)
   let loading = $state(false)
   let inputEl = $state(null)
+  let modalEl = $state(null)
+  let triggerEl = null // element focused before the modal opened, to restore on close
 
   async function loadIndex(key) {
     if (cache.has(key)) return cache.get(key)
@@ -20,9 +28,9 @@
       res = await fetch(`${contentBaseUrl}/${version}/${fallbackLocale}/search-index.json`)
     }
     if (!res.ok) {
-      const empty = { index: null, docsById: new Map() }
-      cache.set(key, empty)
-      return empty
+      // Don't cache the failure — a transient blip shouldn't kill search for
+      // the rest of the session; the next open retries.
+      return { index: null, docsById: new Map() }
     }
     const data = await res.json()
     const index = new FlexSearch.Document({
@@ -32,7 +40,7 @@
     const docsById = new Map()
     for (const d of data.docs) {
       index.add(d)
-      docsById.set(d.id, { id: d.id, title: d.title, url: d.url })
+      docsById.set(d.id, { id: d.id, title: d.title, url: d.url, breadcrumb: breadcrumbOf(d.id) })
     }
     const built = { index, docsById }
     cache.set(key, built)
@@ -70,9 +78,36 @@
       .finally(() => (loading = false))
   })
 
+  // Focus the input on open; restore focus to the trigger (e.g. the search
+  // button) on close — expected behaviour for an aria-modal dialog.
   $effect(() => {
-    if (open && inputEl) inputEl.focus()
+    if (open) {
+      if (!triggerEl) triggerEl = document.activeElement
+      inputEl?.focus()
+    } else if (triggerEl) {
+      const el = triggerEl
+      triggerEl = null
+      el.focus?.()
+    }
   })
+
+  // Trap Tab within the dialog while it's open.
+  function onModalKeydown(e) {
+    if (e.key !== 'Tab' || !modalEl) return
+    const focusables = modalEl.querySelectorAll(
+      'a[href], button:not([disabled]), input, [tabindex]:not([tabindex="-1"])',
+    )
+    if (!focusables.length) return
+    const first = focusables[0]
+    const last = focusables[focusables.length - 1]
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault()
+      last.focus()
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault()
+      first.focus()
+    }
+  }
 
   function onInput(e) {
     query = e.currentTarget.value
@@ -108,12 +143,14 @@
   <div class="docs-search-overlay" role="presentation" onclick={onClose}>
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div
+      bind:this={modalEl}
       class="docs-search-modal"
       role="dialog"
       aria-modal="true"
       aria-label={t('search')}
       tabindex="-1"
       onclick={(e) => e.stopPropagation()}
+      onkeydown={onModalKeydown}
     >
       <input
         bind:this={inputEl}
@@ -142,7 +179,10 @@
                   onmouseenter={() => (active = i)}
                   onclick={() => go(r)}
                 >
-                  {r.title}
+                  <span class="docs-search-result-title">{r.title}</span>
+                  {#if r.breadcrumb}
+                    <span class="docs-search-result-crumb">{r.breadcrumb}</span>
+                  {/if}
                 </button>
               </li>
             {/each}

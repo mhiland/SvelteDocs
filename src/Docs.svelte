@@ -32,8 +32,10 @@
   } = $props()
 
   let manifest = $state(null)
+  let manifestError = $state(false)
   let router = $state(null)
   let pageData = $state(null)
+  let pageError = $state(false)
   let usedFallback = $state(false)
   let searchOpen = $state(false)
   let sidebarOpen = $state(false)
@@ -48,15 +50,30 @@
     return () => r.destroy()
   })
 
+  // Page loads set document.title; restore the host's original on destroy so an
+  // SPA host that doesn't full-reload across the docs boundary isn't left with a
+  // stale docs title.
+  $effect(() => {
+    const original = document.title
+    return () => {
+      document.title = original
+    }
+  })
+
   // Manifest: fetch once.
   $effect(() => {
     let alive = true
     fetch(manifestUrl)
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`manifest ${r.status}`)
+        return r.json()
+      })
       .then((m) => {
         if (alive) manifest = m
       })
-      .catch(() => {})
+      .catch(() => {
+        if (alive) manifestError = true
+      })
     return () => (alive = false)
   })
 
@@ -86,32 +103,68 @@
     const seq = ++loadSeq
     const tryLocale = locale
     ;(async () => {
-      let fellBack = false
-      let res = await fetch(`${contentBaseUrl}/${version}/${tryLocale}/${page}.json`)
-      if (!res.ok && tryLocale !== fallbackLocale) {
-        res = await fetch(`${contentBaseUrl}/${version}/${fallbackLocale}/${page}.json`)
-        fellBack = res.ok
+      try {
+        let fellBack = false
+        let res = await fetch(`${contentBaseUrl}/${version}/${tryLocale}/${page}.json`)
+        if (!res.ok && tryLocale !== fallbackLocale) {
+          res = await fetch(`${contentBaseUrl}/${version}/${fallbackLocale}/${page}.json`)
+          fellBack = res.ok
+        }
+        // A missing page is "not found" (Page.svelte renders that). On static
+        // hosts a missing key often 200s with the SPA index.html, so a JSON
+        // parse failure also means "not found" — not a load error. The error
+        // state is reserved for genuine fetch failures (caught below).
+        let data = null
+        if (res.ok) {
+          try {
+            data = await res.json()
+          } catch {
+            data = null
+          }
+        }
+        if (seq !== loadSeq) return // a newer navigation superseded this one
+        pageData = data
+        usedFallback = data ? fellBack : false
+        pageError = false
+        sidebarOpen = false
+        if (data?.title) document.title = data.title
+      } catch {
+        if (seq !== loadSeq) return
+        pageData = null
+        pageError = true
       }
-      const data = res.ok ? await res.json() : null
-      if (seq !== loadSeq) return // a newer navigation superseded this one
-      pageData = data
-      usedFallback = fellBack
-      sidebarOpen = false
-      if (data?.title) document.title = data.title
     })()
   })
 
-  function changeVersion(slug) {
-    router?.navigate(pageUrl(slug, route?.page ?? 'index'))
-    onNavigate(pageUrl(slug, route?.page ?? 'index'))
+  // Slugs that exist in a given version (so we don't navigate into a 404).
+  function pagesInVersion(slug, loc) {
+    const byLocale = manifest?.nav?.[slug] || {}
+    const tree = byLocale[loc] || byLocale[fallbackLocale] || []
+    const slugs = new Set()
+    for (const node of tree) {
+      if (node.type === 'page') slugs.add(node.slug)
+      else for (const child of node.children) slugs.add(child.slug)
+    }
+    return slugs
   }
 
-  // Cmd/Ctrl-K toggles search.
+  function changeVersion(slug) {
+    // Keep the current page if it exists in the target version; otherwise land
+    // on that version's index rather than a dead-end "Page not found".
+    const page = pagesInVersion(slug, locale).has(route?.page) ? route.page : 'index'
+    const url = pageUrl(slug, page)
+    router?.navigate(url)
+    onNavigate(url)
+  }
+
+  // Cmd/Ctrl-K toggles search; Escape closes the mobile sidebar.
   $effect(() => {
     function onKey(e) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
         searchOpen = !searchOpen
+      } else if (e.key === 'Escape' && sidebarOpen) {
+        sidebarOpen = false
       }
     }
     window.addEventListener('keydown', onKey)
@@ -185,13 +238,24 @@
     {/if}
   </header>
 
+  {#if sidebarOpen}
+    <!-- Mobile drawer scrim. Keyboard close (Escape) is handled globally above. -->
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <div class="docs-scrim" role="presentation" onclick={() => (sidebarOpen = false)}></div>
+  {/if}
+
   <div class="docs-body">
     <aside class="docs-aside" data-open={sidebarOpen ? 'true' : 'false'}>
       <Sidebar nav={navTree} {currentUrl} />
     </aside>
 
     <main class="docs-main">
-      {#if !manifest || !route}
+      {#if manifestError || pageError}
+        <div class="docs-error" role="alert">
+          <h1 class="docs-title">{t('loadError')}</h1>
+          <p>{t('loadErrorBody')}</p>
+        </div>
+      {:else if !manifest || !route}
         <div class="docs-loading"></div>
       {:else}
         <Page page={pageData} {t} showFallback={usedFallback} />

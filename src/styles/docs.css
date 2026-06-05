@@ -17,15 +17,15 @@
   --_accent-hover: var(--accent-hover, #1d4ed8);
   --_accent-soft: var(--accent-soft, #e8eefc);
   --_radius: var(--radius, 6px);
+  /* Typography is host-overridable too (like the colours): set --docs-font /
+     --docs-font-mono on the host to align docs with the site's fonts. */
+  --_font: var(--docs-font, Inter, system-ui, -apple-system, sans-serif);
+  --_font-mono: var(--docs-font-mono, 'Jetbrains Mono', ui-monospace, monospace);
 
   color: var(--_text);
   background: var(--_bg);
   min-height: 100vh;
-  font-family:
-    Inter,
-    system-ui,
-    -apple-system,
-    sans-serif;
+  font-family: var(--_font);
   line-height: 1.6;
 }
 
@@ -231,7 +231,7 @@
   color: var(--_accent-hover);
 }
 .docs-content code {
-  font-family: 'Jetbrains Mono', ui-monospace, monospace;
+  font-family: var(--_font-mono);
   font-size: 0.85em;
   background: var(--_bg2);
   padding: 0.1rem 0.35rem;
@@ -332,6 +332,10 @@ html[data-theme='dark'] .docs-content .shiki span {
 .docs-toc-item a:hover {
   color: var(--_accent);
 }
+.docs-toc-item a.active {
+  color: var(--_accent);
+  font-weight: 600;
+}
 .docs-toc-d3 a {
   padding-left: 1.2rem;
   font-size: 0.78rem;
@@ -409,10 +413,12 @@ html[data-theme='dark'] .docs-content .shiki span {
   padding: 0.4rem;
 }
 .docs-search-result {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
   width: 100%;
   text-align: left;
-  padding: 0.55rem 0.7rem;
+  padding: 0.5rem 0.7rem;
   background: none;
   border: 0;
   border-radius: var(--_radius);
@@ -424,10 +430,31 @@ html[data-theme='dark'] .docs-content .shiki span {
   background: var(--_accent-soft);
   color: var(--_accent);
 }
+.docs-search-result-crumb {
+  font-size: 0.72rem;
+  color: var(--_text2);
+}
+.docs-search-result[data-active='true'] .docs-search-result-crumb {
+  color: inherit;
+  opacity: 0.8;
+}
 .docs-search-empty {
   padding: 1rem;
   color: var(--_text2);
   font-size: 0.9rem;
+}
+
+/* Mobile sidebar scrim (shown only in the mobile media query below). */
+.docs-scrim {
+  display: none;
+}
+
+/* ---- Error ---- */
+.docs-error {
+  padding: 1rem 0 2rem;
+}
+.docs-error p {
+  color: var(--_text2);
 }
 
 /* ---- Loading ---- */
@@ -475,7 +502,24 @@ html[data-theme='dark'] .docs-content .shiki span {
   .docs-aside[data-open='true'] {
     transform: translateX(0);
   }
+  .docs-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 14;
+    background: rgba(0, 0, 0, 0.4);
+  }
   .docs-search-button span {
     display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .docs-caret,
+  .docs-aside {
+    transition: none;
+  }
+  .docs-loading {
+    animation: none;
   }
 }

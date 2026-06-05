@@ -23,6 +23,8 @@
   },
   "scripts": {
     "build:lib": "vite build",
+    "demo:content": "node build/cli.js --local demo/sample-content --out demo/public/docs-content",
+    "predemo": "npm run demo:content",
     "demo": "vite",
     "check": "node --check build/cli.js && node --check build/index.js"
   },

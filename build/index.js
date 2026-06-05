@@ -25,15 +25,25 @@ function writeJson(path, data) {
   writeFileSync(path, JSON.stringify(data))
 }
 
-export async function buildContentBundle({ repoUrl, outDir, basePath = '/docs', workDir }) {
-  if (!repoUrl) throw new Error('buildContentBundle: repoUrl is required')
+export async function buildContentBundle({ repoUrl, local, outDir, basePath = '/docs', workDir }) {
+  if (!repoUrl && !local) throw new Error('buildContentBundle: repoUrl or local is required')
   if (!outDir) throw new Error('buildContentBundle: outDir is required')
-  const clonePath = workDir || join(tmpdir(), `svelte-docs-clone-${process.pid}`)
 
-  log(`cloning ${redact(repoUrl)}`)
-  cloneRepo(repoUrl, clonePath)
-
-  const refs = enumerateRefs(clonePath)
+  // `local` reads an existing directory directly (no clone, no git) and builds a
+  // single `latest` version — handy for the demo and offline builds. Otherwise
+  // clone the repo and build a version per tag.
+  let clonePath
+  let refs
+  if (local) {
+    clonePath = local
+    refs = [{ ref: null, slug: 'latest', label: 'Latest' }]
+    log(`using local content ${local}`)
+  } else {
+    clonePath = workDir || join(tmpdir(), `svelte-docs-clone-${process.pid}`)
+    log(`cloning ${redact(repoUrl)}`)
+    cloneRepo(repoUrl, clonePath)
+    refs = enumerateRefs(clonePath)
+  }
   log(`versions: ${refs.map((r) => r.slug).join(', ')}`)
 
   rmSync(outDir, { recursive: true, force: true })
@@ -49,7 +59,7 @@ export async function buildContentBundle({ repoUrl, outDir, basePath = '/docs', 
   }
 
   for (const { ref, slug, label } of refs) {
-    checkout(clonePath, ref)
+    if (ref !== null) checkout(clonePath, ref)
     const versionPrefix = slug === 'latest' ? '' : `/${slug}`
     const locales = listLocales(clonePath)
     if (!locales.length) {
@@ -109,7 +119,7 @@ export async function buildContentBundle({ repoUrl, outDir, basePath = '/docs', 
   }
 
   writeJson(join(outDir, 'manifest.json'), manifest)
-  rmSync(clonePath, { recursive: true, force: true })
+  if (!local) rmSync(clonePath, { recursive: true, force: true })
   log(`done → ${outDir}`)
   return manifest
 }

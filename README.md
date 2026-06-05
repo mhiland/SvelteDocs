@@ -82,8 +82,14 @@ paths (SPA fallback) so deep links resolve.
 
 Colours come from the host's CSS variables (`--bg`, `--bg2`, `--bg3`,
 `--border`, `--text`, `--text2`, `--accent`, `--accent-hover`, `--accent-soft`,
-`--radius`); dark mode follows the host's `html[data-theme]`. Fallbacks are
-provided so it also works standalone.
+`--radius`); dark mode follows the host's `html[data-theme]`. Typography is
+overridable the same way via `--docs-font` and `--docs-font-mono`. Fallbacks are
+provided so it also works standalone, and animations respect
+`prefers-reduced-motion`.
+
+The engine sets `document.title` per page and restores the host's original title
+when unmounted, so an SPA host that navigates in/out of `/docs` without a full
+reload isn't left with a stale title.
 
 ## Local development
 

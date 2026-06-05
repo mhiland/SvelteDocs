@@ -77,6 +77,22 @@
   font-size: 1.2rem;
   cursor: pointer;
 }
+.docs-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  color: var(--_text2);
+  background: var(--_bg2);
+  border: 1px solid var(--_border);
+  border-radius: var(--_radius);
+  cursor: pointer;
+}
+.docs-theme-toggle:hover {
+  color: var(--_text);
+  border-color: var(--_accent);
+}
 
 /* ---- Fields (version / language selects) ---- */
 .docs-field {

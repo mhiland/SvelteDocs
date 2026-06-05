@@ -74,6 +74,8 @@ paths (SPA fallback) so deep links resolve.
 | `onLocaleChange` | — | called by the engine's language select |
 | `locales` | `[]` | `[{code,label}]` for the language select |
 | `fallbackLocale` | `en` | used when a page/locale is missing |
+| `theme` | — | host's current theme (`'light'`/`'dark'`) for the toggle icon |
+| `onToggleTheme` | — | host's theme toggle; pass it to show a toggle button (the engine reads the theme from `html[data-theme]`) |
 | `onNavigate` | — | optional navigation hook |
 
 ## Theming

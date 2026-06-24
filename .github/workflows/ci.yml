@@ -37,6 +37,32 @@ jobs:
       - name: Syntax check (build entry points)
         run: npm run check
 
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      # Exercises the build toolkit end-to-end (remark/rehype/shiki/gray-matter
+      # pipeline) — catches breakage that `node --check` can't, e.g. a missing
+      # runtime dependency.
+      - name: Build content bundle
+        run: npm run demo:content
+
+      # Compiles the Svelte engine source via vite — catches component compile
+      # errors. The lib ships as source, so this is a verification step only.
+      - name: Compile engine
+        run: npm run build:lib
+
   secret-scan:
     runs-on: ubuntu-latest
     steps:

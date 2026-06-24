@@ -83,3 +83,26 @@ export function listMarkdown(dir, locale) {
   if (existsSync(root)) walk(root)
   return out
 }
+
+// Image extensions copied verbatim into the bundle so relative <img> refs in the
+// markdown resolve. Keep in sync with rewriteImages in pipeline.js.
+const IMAGE_RE = /\.(png|jpe?g|gif|svg|webp|avif|bmp|ico|apng)$/i
+
+// Walk docs/<locale> for image files; return { absPath, rel } per file, where
+// `rel` is the path relative to docs/<locale> (e.g. "web-ui/images/foo.png").
+export function listImages(dir, locale) {
+  const root = join(dir, 'docs', locale)
+  const out = []
+  function walk(current) {
+    for (const name of readdirSync(current)) {
+      const abs = join(current, name)
+      if (statSync(abs).isDirectory()) {
+        walk(abs)
+      } else if (IMAGE_RE.test(name)) {
+        out.push({ absPath: abs, rel: relative(root, abs).replace(/\\/g, '/') })
+      }
+    }
+  }
+  if (existsSync(root)) walk(root)
+  return out
+}

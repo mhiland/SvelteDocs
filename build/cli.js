@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 // CLI wrapper around buildContentBundle.
 //
-//   svelte-docs-build --repo <url> --out <dir> [--base-path /docs]
+//   svelte-docs-build --repo <url> --out <dir> [--base-path /docs] [--content-base-url /docs-content]
 //   svelte-docs-build --local <dir> --out <dir> [--base-path /docs]
 //
 // --repo clones a git repo and builds a version per tag (+ main->latest).
 // --local reads an existing directory directly (no git) as a single `latest`.
+// --content-base-url is the public URL the bundle is served from; relative
+// <img> srcs are rewritten to absolute URLs under it (default /docs-content).
 
 import { buildContentBundle } from './index.js'
 
@@ -17,6 +19,7 @@ function parseArgs(argv) {
     else if (a === '--local') args.local = argv[++i]
     else if (a === '--out') args.outDir = argv[++i]
     else if (a === '--base-path') args.basePath = argv[++i]
+    else if (a === '--content-base-url') args.contentBaseUrl = argv[++i]
     else if (a === '--work-dir') args.workDir = argv[++i]
     else if (a === '-h' || a === '--help') args.help = true
   }

@@ -80,7 +80,44 @@ function resolveSlug(currentDir, rel) {
   return segs.join('/')
 }
 
-export async function renderMarkdown(raw, { basePath = '/docs', versionPrefix = '', currentDir = '' } = {}) {
+// Rewrite relative <img> sources (e.g. images/foo.png, ../shared/diagram.svg) to
+// the absolute bundle URL the assets are copied to at build time:
+//   <assetBaseUrl>/<dir>/images/foo.png  ==  /docs-content/<version>/<locale>/...
+// Absolute (/...), external (http:, data:) and protocol-relative srcs are left
+// untouched. Mirrors rewriteLinks; runs after sanitize so the generated root-
+// relative URL is emitted verbatim.
+function rewriteImages({ assetBaseUrl, currentDir }) {
+  return (tree) => {
+    visit(tree, 'element', (node) => {
+      if (node.tagName !== 'img' || !node.properties) return
+      const src = node.properties.src
+      if (typeof src !== 'string' || !src) return
+      if (/^[a-z]+:/i.test(src) || src.startsWith('/') || src.startsWith('//')) return
+      const resolved = resolveAssetPath(currentDir, src)
+      if (!resolved) return
+      node.properties.src = `${assetBaseUrl}/${resolved}`
+    })
+  }
+}
+
+// Resolve a relative asset target against the current file's directory, keeping
+// the file extension (and dropping any ?query/#hash). Yields a bundle-relative
+// path like "web-ui/images/license-policy.png".
+function resolveAssetPath(currentDir, rel) {
+  const [pathPart] = rel.split(/[?#]/)
+  const segs = (currentDir ? currentDir.split('/') : []).filter(Boolean)
+  for (const part of pathPart.split('/')) {
+    if (part === '' || part === '.') continue
+    if (part === '..') segs.pop()
+    else segs.push(part)
+  }
+  return segs.join('/')
+}
+
+export async function renderMarkdown(
+  raw,
+  { basePath = '/docs', versionPrefix = '', currentDir = '', assetBaseUrl = '' } = {},
+) {
   // Strip optional frontmatter (none today, but authors may add it later).
   const { content, data } = matter(raw)
   const store = { title: '', toc: [] }
@@ -95,6 +132,7 @@ export async function renderMarkdown(raw, { basePath = '/docs', versionPrefix = 
     .use(extractTitle, store)
     .use(collectToc, store)
     .use(rewriteLinks, { basePath, versionPrefix, currentDir })
+    .use(rewriteImages, { assetBaseUrl, currentDir })
     .use(rehypeShiki, {
       themes: { light: 'github-light', dark: 'github-dark' },
       defaultColor: false,

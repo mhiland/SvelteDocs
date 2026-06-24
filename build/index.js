@@ -11,21 +11,28 @@
 //
 // The bundle is served same-origin and consumed by the <Docs> engine at runtime.
 
-import { mkdirSync, writeFileSync, rmSync } from 'node:fs'
+import { mkdirSync, writeFileSync, rmSync, copyFileSync } from 'node:fs'
 import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { tmpdir } from 'node:os'
 import { renderMarkdown } from './pipeline.js'
 import { buildNav, urlFor } from './nav.js'
 import { buildSearchDocs } from './search.js'
-import { cloneRepo, enumerateRefs, checkout, listLocales, listMarkdown } from './clone.js'
+import { cloneRepo, enumerateRefs, checkout, listLocales, listMarkdown, listImages } from './clone.js'
 
 function writeJson(path, data) {
   mkdirSync(dirname(path), { recursive: true })
   writeFileSync(path, JSON.stringify(data))
 }
 
-export async function buildContentBundle({ repoUrl, local, outDir, basePath = '/docs', workDir }) {
+export async function buildContentBundle({
+  repoUrl,
+  local,
+  outDir,
+  basePath = '/docs',
+  contentBaseUrl = '/docs-content',
+  workDir,
+}) {
   if (!repoUrl && !local) throw new Error('buildContentBundle: repoUrl or local is required')
   if (!outDir) throw new Error('buildContentBundle: outDir is required')
 
@@ -70,6 +77,17 @@ export async function buildContentBundle({ repoUrl, local, outDir, basePath = '/
     manifest.nav[slug] = {}
 
     for (const locale of locales) {
+      // Copy image assets verbatim into the bundle so the rewritten <img> srcs
+      // (assetBaseUrl below) resolve at runtime.
+      const assetBaseUrl = `${contentBaseUrl}/${slug}/${locale}`
+      let assetCount = 0
+      for (const img of listImages(clonePath, locale)) {
+        const dest = join(outDir, slug, locale, img.rel)
+        mkdirSync(dirname(dest), { recursive: true })
+        copyFileSync(img.absPath, dest)
+        assetCount++
+      }
+
       const files = listMarkdown(clonePath, locale)
       const pages = []
       for (const f of files) {
@@ -78,6 +96,7 @@ export async function buildContentBundle({ repoUrl, local, outDir, basePath = '/
           basePath,
           versionPrefix,
           currentDir: f.dir,
+          assetBaseUrl,
         })
         pages.push({
           slug: f.slug,
@@ -114,7 +133,7 @@ export async function buildContentBundle({ repoUrl, local, outDir, basePath = '/
         schema: 1,
         docs: buildSearchDocs(pages),
       })
-      log(`  ${slug}/${locale}: ${pages.length} pages`)
+      log(`  ${slug}/${locale}: ${pages.length} pages, ${assetCount} images`)
     }
   }
 

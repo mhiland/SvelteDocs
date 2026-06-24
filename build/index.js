@@ -18,7 +18,14 @@ import { tmpdir } from 'node:os'
 import { renderMarkdown } from './pipeline.js'
 import { buildNav, urlFor } from './nav.js'
 import { buildSearchDocs } from './search.js'
-import { cloneRepo, enumerateRefs, checkout, listLocales, listMarkdown, listImages } from './clone.js'
+import {
+  cloneRepo,
+  enumerateRefs,
+  checkout,
+  listLocales,
+  listMarkdown,
+  listImages,
+} from './clone.js'
 
 function writeJson(path, data) {
   mkdirSync(dirname(path), { recursive: true })

@@ -4,10 +4,10 @@ The `<Docs>` component is configured entirely through props.
 
 ## Common props
 
-| prop | purpose |
-| --- | --- |
-| `basePath` | URL prefix the engine owns |
-| `siteName` | top-left brand label |
+| prop             | purpose                         |
+| ---------------- | ------------------------------- |
+| `basePath`       | URL prefix the engine owns      |
+| `siteName`       | top-left brand label            |
 | `contentBaseUrl` | where the JSON bundle is served |
 
 ## Search

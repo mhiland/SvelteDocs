@@ -78,7 +78,9 @@
   })
 
   const versionSlugs = $derived(manifest ? manifest.versions.map((v) => v.slug) : [])
-  const route = $derived(router && manifest ? parseRoute(router.path, basePath, versionSlugs) : null)
+  const route = $derived(
+    router && manifest ? parseRoute(router.path, basePath, versionSlugs) : null,
+  )
 
   function versionPrefix(slug) {
     return slug === 'latest' ? '' : `/${slug}`

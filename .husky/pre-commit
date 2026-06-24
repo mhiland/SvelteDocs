@@ -1,0 +1,5 @@
+if [ ! -d node_modules ]; then
+  echo "pre-commit: node_modules missing — run npm ci first"
+  exit 1
+fi
+npx lint-staged

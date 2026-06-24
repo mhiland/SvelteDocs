@@ -20,7 +20,8 @@ export const strings = {
     notFound: 'Page not found',
     notFoundBody: 'The page you requested does not exist in this version.',
     loadError: 'Couldn’t load the docs',
-    loadErrorBody: 'Something went wrong loading this content. Check your connection and try again.',
+    loadErrorBody:
+      'Something went wrong loading this content. Check your connection and try again.',
   },
   fr: {
     search: 'Rechercher',
@@ -35,11 +36,13 @@ export const strings = {
     menu: 'Menu',
     close: 'Fermer',
     toggleTheme: 'Changer de thème',
-    fallbackNotice: "Cette page n'est pas encore disponible dans votre langue — affichage en anglais.",
+    fallbackNotice:
+      "Cette page n'est pas encore disponible dans votre langue — affichage en anglais.",
     notFound: 'Page introuvable',
     notFoundBody: "La page demandée n'existe pas dans cette version.",
     loadError: 'Impossible de charger la documentation',
-    loadErrorBody: 'Une erreur est survenue lors du chargement. Vérifiez votre connexion et réessayez.',
+    loadErrorBody:
+      'Une erreur est survenue lors du chargement. Vérifiez votre connexion et réessayez.',
   },
 }
 

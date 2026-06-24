@@ -25,7 +25,8 @@ export class DocsRouter {
   }
 
   #intercept(e) {
-    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)
+      return
     const a = e.target.closest?.('a[href]')
     if (!a || a.target === '_blank' || a.hasAttribute('download')) return
     let url

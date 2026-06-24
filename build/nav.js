@@ -44,7 +44,8 @@ export function buildNav(pages, { basePath, versionPrefix }) {
       roots.push(node)
     } else {
       const top = dir.split('/')[0]
-      if (!categories.has(top)) categories.set(top, { type: 'category', slug: top, title: humanize(top), children: [] })
+      if (!categories.has(top))
+        categories.set(top, { type: 'category', slug: top, title: humanize(top), children: [] })
       categories.get(top).children.push(node)
     }
   }

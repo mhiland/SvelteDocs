@@ -96,18 +96,34 @@
     return byLocale[locale] || byLocale[fallbackLocale] || []
   })
 
+  // URL → content slug. A section root such as `/docs/admin` is the canonical
+  // URL for the page whose slug is `admin/index` (urlFor strips the trailing
+  // `/index`), so the route's `page` is `admin` but the built file is
+  // `admin/index.json`. Without this map the loader would fetch `admin.json` and
+  // 404. The nav tree already carries the url→slug mapping, and `route` is only
+  // set once the manifest (hence navTree) has loaded, so the lookup is ready.
+  const urlToSlug = $derived.by(() => {
+    const map = new Map()
+    for (const node of navTree) {
+      if (node.type === 'page') map.set(node.url, node.slug)
+      else if (node.children) for (const child of node.children) map.set(child.url, child.slug)
+    }
+    return map
+  })
+
   // Load the current page JSON whenever route or locale changes (latest wins).
   $effect(() => {
     if (!route) return
     const { version, page } = route
+    const slug = urlToSlug.get(currentUrl) ?? page
     const seq = ++loadSeq
     const tryLocale = locale
     ;(async () => {
       try {
         let fellBack = false
-        let res = await fetch(`${contentBaseUrl}/${version}/${tryLocale}/${page}.json`)
+        let res = await fetch(`${contentBaseUrl}/${version}/${tryLocale}/${slug}.json`)
         if (!res.ok && tryLocale !== fallbackLocale) {
-          res = await fetch(`${contentBaseUrl}/${version}/${fallbackLocale}/${page}.json`)
+          res = await fetch(`${contentBaseUrl}/${version}/${fallbackLocale}/${slug}.json`)
           fellBack = res.ok
         }
         // A missing page is "not found" (Page.svelte renders that). On static

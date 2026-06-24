@@ -13,7 +13,9 @@ function git(dir, args) {
 
 export function cloneRepo(repoUrl, dir) {
   rmSync(dir, { recursive: true, force: true })
-  execFileSync('git', ['clone', '--quiet', '--no-single-branch', repoUrl, dir], { stdio: 'inherit' })
+  execFileSync('git', ['clone', '--quiet', '--no-single-branch', repoUrl, dir], {
+    stdio: 'inherit',
+  })
 }
 
 // Semver-ish descending sort for tags; non-semver tags sort after, lexically.

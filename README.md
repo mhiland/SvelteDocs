@@ -63,20 +63,20 @@ paths (SPA fallback) so deep links resolve.
 
 ### Props
 
-| prop | default | purpose |
-|---|---|---|
-| `basePath` | `/docs` | URL prefix the engine owns |
-| `siteName` | `Docs` | top-left brand label |
-| `homeUrl` | `/` | where the brand link goes (site root for embedded docs; set to `basePath` for a standalone docs site) |
-| `manifestUrl` | `/docs-content/manifest.json` | first fetch |
-| `contentBaseUrl` | `/docs-content` | root for page JSON + search indexes |
-| `locale` | `en` | host's current locale (reactive) |
-| `onLocaleChange` | — | called by the engine's language select |
-| `locales` | `[]` | `[{code,label}]` for the language select |
-| `fallbackLocale` | `en` | used when a page/locale is missing |
-| `theme` | — | host's current theme (`'light'`/`'dark'`) for the toggle icon |
-| `onToggleTheme` | — | host's theme toggle; pass it to show a toggle button (the engine reads the theme from `html[data-theme]`) |
-| `onNavigate` | — | optional navigation hook |
+| prop             | default                       | purpose                                                                                                   |
+| ---------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `basePath`       | `/docs`                       | URL prefix the engine owns                                                                                |
+| `siteName`       | `Docs`                        | top-left brand label                                                                                      |
+| `homeUrl`        | `/`                           | where the brand link goes (site root for embedded docs; set to `basePath` for a standalone docs site)     |
+| `manifestUrl`    | `/docs-content/manifest.json` | first fetch                                                                                               |
+| `contentBaseUrl` | `/docs-content`               | root for page JSON + search indexes                                                                       |
+| `locale`         | `en`                          | host's current locale (reactive)                                                                          |
+| `onLocaleChange` | —                             | called by the engine's language select                                                                    |
+| `locales`        | `[]`                          | `[{code,label}]` for the language select                                                                  |
+| `fallbackLocale` | `en`                          | used when a page/locale is missing                                                                        |
+| `theme`          | —                             | host's current theme (`'light'`/`'dark'`) for the toggle icon                                             |
+| `onToggleTheme`  | —                             | host's theme toggle; pass it to show a toggle button (the engine reads the theme from `html[data-theme]`) |
+| `onNavigate`     | —                             | optional navigation hook                                                                                  |
 
 ## Theming
 

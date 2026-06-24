@@ -2,8 +2,16 @@
   // Lazy full-text search. FlexSearch and the per-(version,locale) index JSON
   // load only when the modal first opens, so they never touch the initial docs
   // payload. Indexes are cached per key for the session.
-  let { open = false, onClose, contentBaseUrl, version, locale, fallbackLocale = 'en', t, onNavigate } =
-    $props()
+  let {
+    open = false,
+    onClose,
+    contentBaseUrl,
+    version,
+    locale,
+    fallbackLocale = 'en',
+    t,
+    onNavigate,
+  } = $props()
 
   const cache = new Map() // `${version}:${locale}` -> { index, docsById }
 

@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the GitHub Release and upload the tarball
+      id-token: write # OIDC token for keyless signing of the attestation
+      attestations: write # record the SLSA build provenance attestation
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Syntax check (build entry points)
+        run: npm run check
+
+      # The package ships as source, so the release artifact is just the npm
+      # tarball (src/ + build/ + package.json, per the "files" field). No
+      # compilation step — `vite build` only powers the local demo.
+      - name: Pack tarball
+        id: pack
+        run: echo "tarball=$(npm pack | tail -n1)" >> "$GITHUB_OUTPUT"
+
+      # SLSA Build L2: GitHub-native provenance, keyless OIDC signing.
+      # Verify later with: gh attestation verify <tarball> --repo <owner>/<repo>
+      - name: Generate SLSA build provenance attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: ${{ steps.pack.outputs.tarball }}
+
+      - name: Create GitHub Release and attach tarball
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
+        with:
+          files: ${{ steps.pack.outputs.tarball }}
+          generate_release_notes: true

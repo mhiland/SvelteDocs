@@ -43,7 +43,11 @@ function collectToc(store) {
       if (node.tagName !== 'h2' && node.tagName !== 'h3') return
       const id = node.properties?.id
       if (!id) return
-      store.toc.push({ depth: node.tagName === 'h2' ? 2 : 3, id: String(id), text: toString(node).trim() })
+      store.toc.push({
+        depth: node.tagName === 'h2' ? 2 : 3,
+        id: String(id),
+        text: toString(node).trim(),
+      })
     })
   }
 }
@@ -61,7 +65,8 @@ function rewriteLinks({ basePath, versionPrefix, currentDir }) {
       const [pathPart, hash = ''] = href.split('#')
       const slug = resolveSlug(currentDir, pathPart)
       if (slug === null) return
-      node.properties.href = `${basePath}${versionPrefix}/${slug}`.replace(/\/index$/, '') + (hash ? `#${hash}` : '')
+      node.properties.href =
+        `${basePath}${versionPrefix}/${slug}`.replace(/\/index$/, '') + (hash ? `#${hash}` : '')
       node.properties['data-docs-link'] = ''
     })
   }

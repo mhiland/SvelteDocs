@@ -1,6 +1,6 @@
 {
   "name": "@dependably/svelte-docs",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A small, reusable Svelte 5 documentation engine: client-rendered sidebar/search/version/i18n docs from a markdown git repo, plus a build toolkit that turns markdown into a static content bundle.",
   "type": "module",
   "license": "UNLICENSED",
@@ -60,7 +60,6 @@
     "remark-gfm": "4.0.1",
     "remark-parse": "11.0.0",
     "remark-rehype": "11.1.2",
-    "shiki": "3.23.0",
     "unified": "11.0.5",
     "unist-util-visit": "5.1.0"
   },

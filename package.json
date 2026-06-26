@@ -30,6 +30,8 @@
     "predemo": "npm run demo:content",
     "demo": "vite",
     "check": "node --check build/cli.js && node --check build/index.js",
+    "sbom": "cyclonedx-npm --output-format json --output-file sbom.json",
+    "sbom:prod": "cyclonedx-npm --omit dev --output-format json --output-file sbom-prod.json",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -64,6 +66,7 @@
     "unist-util-visit": "5.1.0"
   },
   "devDependencies": {
+    "@cyclonedx/cyclonedx-npm": "4.2.1",
     "@eslint/js": "9.39.4",
     "@sveltejs/vite-plugin-svelte": "7.1.2",
     "eslint": "9.39.4",

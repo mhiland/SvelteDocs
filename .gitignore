@@ -3,3 +3,8 @@ demo-dist/
 demo/public/docs-content/
 .DS_Store
 *.log
+
+# CI artifacts: generated SBOM + npm cache used by .gitlab-ci.yml
+sbom.json
+sbom-prod.json
+.npm/

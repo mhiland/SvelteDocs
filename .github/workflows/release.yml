@@ -38,15 +38,25 @@ jobs:
         id: pack
         run: echo "tarball=$(npm pack | tail -n1)" >> "$GITHUB_OUTPUT"
 
-      # SLSA Build L2: GitHub-native provenance, keyless OIDC signing.
-      # Verify later with: gh attestation verify <tarball> --repo <owner>/<repo>
+      # CycloneDX SBOM (spec 1.6) of the full dependency tree, attached to the
+      # Release alongside the tarball so consumers get the supply-chain manifest.
+      - name: Generate SBOM
+        run: npm run sbom
+
+      # SLSA Build L2: GitHub-native provenance, keyless OIDC signing. Covers both
+      # the tarball and the SBOM.
+      # Verify later with: gh attestation verify <file> --repo <owner>/<repo>
       - name: Generate SLSA build provenance attestation
         uses: actions/attest-build-provenance@v2
         with:
-          subject-path: ${{ steps.pack.outputs.tarball }}
+          subject-path: |
+            ${{ steps.pack.outputs.tarball }}
+            sbom.json
 
-      - name: Create GitHub Release and attach tarball
+      - name: Create GitHub Release and attach tarball + SBOM
         uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
-          files: ${{ steps.pack.outputs.tarball }}
+          files: |
+            ${{ steps.pack.outputs.tarball }}
+            sbom.json
           generate_release_notes: true

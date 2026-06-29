@@ -19,7 +19,22 @@ import rehypeShiki from '@shikijs/rehype'
 import rehypeStringify from 'rehype-stringify'
 import { visit } from 'unist-util-visit'
 import { toString } from 'hast-util-to-string'
-import matter from 'gray-matter'
+import { load as loadYaml } from 'js-yaml'
+
+// Split an optional leading `---`-delimited YAML frontmatter block from the
+// markdown body. Replaces gray-matter (whose pinned js-yaml 3.x carries
+// GHSA-h67p-54hq-rp68 and whose v3 `safeLoad` API blocks moving js-yaml forward).
+// Only `title`/`order` are consumed downstream; YAML is parsed with js-yaml's
+// safe `load`. Frontmatter must open on the first line (optional BOM) and close
+// with a matching `---`; anything else is treated as plain content, mirroring
+// gray-matter's behaviour for our use.
+function parseFrontmatter(raw) {
+  const m = /^\uFEFF?---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n([\s\S]*))?$/.exec(raw)
+  if (!m) return { content: raw, data: {} }
+  const parsed = loadYaml(m[1])
+  const data = parsed && typeof parsed === 'object' ? parsed : {}
+  return { content: m[2] ?? '', data }
+}
 
 // Pull the first <h1> out of the tree: its text becomes the page title and the
 // node is removed so the engine can render the title in its own chrome.
@@ -124,7 +139,7 @@ export async function renderMarkdown(
   { basePath = '/docs', versionPrefix = '', currentDir = '', assetBaseUrl = '' } = {},
 ) {
   // Strip optional frontmatter (none today, but authors may add it later).
-  const { content, data } = matter(raw)
+  const { content, data } = parseFrontmatter(raw)
   const store = { title: '', toc: [] }
 
   const file = await unified()

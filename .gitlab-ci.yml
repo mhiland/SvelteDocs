@@ -4,7 +4,7 @@
 # downstream public mirror. The package ships as Svelte SOURCE and is private /
 # UNLICENSED, so there is no registry-publish step — the pipeline lints, builds
 # (compile-checks), generates an SBOM, ships it to Dependency-Track, and (on a
-# manual gate, default branch only) mirrors main + tags back to GitHub.
+# manual gate, on the default branch or a tag) mirrors main + tags back to GitHub.
 #
 # Flow:  test  →  build  →  sbom  →  sbom-publish  →  mirror (manual)
 #
@@ -13,17 +13,19 @@
 #   sbom           generate a CycloneDX SBOM (every pipeline), kept as an artifact
 #   sbom-publish   upload the SBOM to Dependency-Track on the default branch (its own
 #                  stage so it never races the `sbom` job in the shared build dir)
-#   publish-github manual gate (last stage) that mirrors the default branch + tags
-#                  to the public GitHub repo — reachable only after every earlier
-#                  stage has passed. Pushing the tag there fires the GitHub Release
-#                  workflow (.github/workflows/release.yml).
+#   publish-github manual gate (last stage) that mirrors main + tags to the public
+#                  GitHub repo — reachable only after every earlier stage has
+#                  passed. Offered on the default branch and on tag pipelines, so a
+#                  release tag can be pushed with one click. Pushing the tag there
+#                  fires the GitHub Release workflow (.github/workflows/release.yml).
 #
 # Required CI/CD variables (Settings → CI/CD → Variables):
 #   dependencyTrack_url   Dependency-Track base URL, e.g. https://dtrack.example.com
 #   dependencyTrack_token DT API key with BOM_UPLOAD + PROJECT_CREATION_UPLOAD perms
 #   GITHUB_TOKEN          GitHub PAT (or fine-grained token) with `contents:write`
 #                         on mhiland/SvelteDocs — used by `publish-github`. Set
-#                         Protected + Masked (default branch only).
+#                         Masked; if Protected, also protect the release tags (or
+#                         the tag-pipeline mirror job won't see it).
 #   GITHUB_MIRROR_REPO    (optional) override the GitHub push URL; defaults to
 #                         https://github.com/mhiland/SvelteDocs.git
 
@@ -207,10 +209,13 @@ sbom-publish:
 # workflow.
 #
 # Gating: it lives in the LAST stage and uses no `needs:`, so it only becomes
-# reachable once every earlier stage (test → build → sbom → sbom-publish) has
-# succeeded on the default branch. Even then it's `when: manual`, so a human clicks
-# to mirror. Default branch only; serialized via resource_group; interruptible:false
-# so an in-flight push is never auto-cancelled.
+# reachable once every earlier stage (test → build → sbom[ → sbom-publish]) has
+# succeeded. Even then it's `when: manual`, so a human clicks to mirror. Offered
+# on the default branch AND on tag pipelines (so a release tag can be pushed to
+# GitHub directly); serialized via resource_group; interruptible:false so an
+# in-flight push is never auto-cancelled. On a tag pipeline HEAD is the tagged
+# commit — in the normal release flow the tag sits on main's HEAD, so pushing
+# HEAD→main is a fast-forward (a non-force push, so it can never clobber).
 #
 # GIT_DEPTH: 0 turns the shallow CI clone into a full clone so the whole history
 # and all tags can be pushed. Auth uses an http.extraheader carrying a base64
@@ -224,7 +229,13 @@ publish-github:
     GIT_DEPTH: '0'
   resource_group: publish-github
   rules:
+    # Manual mirror on the default branch...
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
+      allow_failure: false
+    # ...and on tag pipelines, so cutting a release (tag + version bump) offers a
+    # one-click push of main + tags to GitHub, which fires the Release workflow.
+    - if: '$CI_COMMIT_TAG'
       when: manual
       allow_failure: false
   script:

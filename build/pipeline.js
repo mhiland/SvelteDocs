@@ -70,7 +70,13 @@ function collectToc(store) {
 // Rewrite relative markdown links (e.g. ./package-managers/npm.md, ../docker)
 // to absolute doc URLs the in-app router understands. Absolute, external and
 // in-page (#) links are left untouched.
-function rewriteLinks({ basePath, versionPrefix, currentDir }) {
+//
+// A relative link to a non-page file (e.g. ./dashboards/foo.json, ../report.pdf)
+// is a downloadable asset, not a doc page. It's pointed at the copied bundle
+// asset (like <img> srcs) and marked `download`, so the in-app router ignores
+// the click (it only hijacks links without a `download` attr) and the browser
+// fetches the file instead of routing to a missing page.
+function rewriteLinks({ basePath, versionPrefix, currentDir, assetBaseUrl }) {
   return (tree) => {
     visit(tree, 'element', (node) => {
       if (node.tagName !== 'a' || !node.properties) return
@@ -78,6 +84,13 @@ function rewriteLinks({ basePath, versionPrefix, currentDir }) {
       if (typeof href !== 'string' || !href) return
       if (/^[a-z]+:/i.test(href) || href.startsWith('/') || href.startsWith('#')) return
       const [pathPart, hash = ''] = href.split('#')
+      if (isAssetLink(pathPart)) {
+        const resolved = resolveAssetPath(currentDir, pathPart)
+        if (!resolved) return
+        node.properties.href = `${assetBaseUrl}/${resolved}`
+        node.properties.download = ''
+        return
+      }
       const slug = resolveSlug(currentDir, pathPart)
       if (slug === null) return
       node.properties.href =
@@ -85,6 +98,16 @@ function rewriteLinks({ basePath, versionPrefix, currentDir }) {
       node.properties['data-docs-link'] = ''
     })
   }
+}
+
+// A relative link target is a doc page if it's extensionless (e.g. ./npm) or
+// carries a page extension (.md/.markdown/.html); anything else (.json, .pdf,
+// .csv, .zip…) is a downloadable asset copied verbatim into the bundle.
+function isAssetLink(rel) {
+  const last = (rel.split('/').pop() || '').split(/[?#]/)[0]
+  const dot = last.lastIndexOf('.')
+  if (dot <= 0) return false
+  return !/^(md|markdown|html)$/i.test(last.slice(dot + 1))
 }
 
 // Resolve a relative link target against the current file's directory and strip
@@ -151,7 +174,7 @@ export async function renderMarkdown(
     .use(rehypeAutolinkHeadings, { behavior: 'wrap' })
     .use(extractTitle, store)
     .use(collectToc, store)
-    .use(rewriteLinks, { basePath, versionPrefix, currentDir })
+    .use(rewriteLinks, { basePath, versionPrefix, currentDir, assetBaseUrl })
     .use(rewriteImages, { assetBaseUrl, currentDir })
     .use(rehypeShiki, {
       themes: { light: 'github-light', dark: 'github-dark' },

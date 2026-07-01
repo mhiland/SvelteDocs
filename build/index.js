@@ -24,7 +24,7 @@ import {
   checkout,
   listLocales,
   listMarkdown,
-  listImages,
+  listAssets,
 } from './clone.js'
 
 function writeJson(path, data) {
@@ -84,14 +84,15 @@ export async function buildContentBundle({
     manifest.nav[slug] = {}
 
     for (const locale of locales) {
-      // Copy image assets verbatim into the bundle so the rewritten <img> srcs
-      // (assetBaseUrl below) resolve at runtime.
+      // Copy static assets (images + downloadable files like .json/.pdf)
+      // verbatim into the bundle so the rewritten <img> srcs and <a> download
+      // links (assetBaseUrl below) resolve at runtime.
       const assetBaseUrl = `${contentBaseUrl}/${slug}/${locale}`
       let assetCount = 0
-      for (const img of listImages(clonePath, locale)) {
-        const dest = join(outDir, slug, locale, img.rel)
+      for (const asset of listAssets(clonePath, locale)) {
+        const dest = join(outDir, slug, locale, asset.rel)
         mkdirSync(dirname(dest), { recursive: true })
-        copyFileSync(img.absPath, dest)
+        copyFileSync(asset.absPath, dest)
         assetCount++
       }
 
@@ -140,7 +141,7 @@ export async function buildContentBundle({
         schema: 1,
         docs: buildSearchDocs(pages),
       })
-      log(`  ${slug}/${locale}: ${pages.length} pages, ${assetCount} images`)
+      log(`  ${slug}/${locale}: ${pages.length} pages, ${assetCount} assets`)
     }
   }
 
